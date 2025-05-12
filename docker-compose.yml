@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: backend_app
+    env_file:
+      - .env
+    ports:
+      - "8081:8081"
+    restart: always
+
+  frontend:
+    build: ./frontend
+    container_name: frontend_app
+    ports:
+      - "80:80"
+    restart: always
+
+  redis:
+    image: redis:7
+    container_name: redis_server
+    ports:
+      - "6379:6379"
+    restart: always
