@@ -7,14 +7,14 @@ services:
     env_file:
       - .env
     ports:
-      - "8081:8081"
+      - "8282:8081"
     restart: always
 
   frontend:
     build: ./frontend
     container_name: frontend_app
     ports:
-      - "80:80"
+      - "8181:80"
     restart: always
 
   redis:
