@@ -2,11 +2,9 @@ name: 🚀 Deploy Jonathanbet App
 on:
   push:
     branches: [main]
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
     - name: 🧾 Checkout
       uses: actions/checkout@v3
@@ -30,5 +28,5 @@ jobs:
         port: 22
         script: |
           cd /var/www/jonathanbet-app
-          docker compose down
-          docker compose up -d --build
+          docker-compose down
+          docker-compose up -d --build
