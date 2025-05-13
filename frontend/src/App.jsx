@@ -12,7 +12,7 @@ export default function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/structured`);
+        const res = await axios.get("http://localhost:8081/structured");
         setData(res.data);
         const firstSport = Object.keys(res.data)[0];
         setSelectedSport(firstSport);
@@ -23,6 +23,7 @@ export default function App() {
 
     fetchData();
   }, []);
+
   const sports = Object.keys(data);
   const currentMatches =
     data[selectedSport]?.[selectedCategory] || [];

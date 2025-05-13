@@ -6,9 +6,7 @@ export default function Sidebar({ sports, selected, onSelect }) {
         {sports.map((sport) => (
           <li
             key={sport}
-            className={`cursor-pointer hover:text-green-400 ${
-              sport === selected ? "text-green-400 font-bold" : ""
-            }`}
+            className={`cursor-pointer hover:text-green-400 ${sport === selected ? "text-green-400 font-bold" : ""}`}
             onClick={() => onSelect(sport)}
           >
             {sport}
