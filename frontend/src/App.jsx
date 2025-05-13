@@ -12,7 +12,8 @@ export default function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get("http://localhost:8081/structured");
+        // const res = await axios.get("http://localhost:8081/structured");
+        const res = await axios.get('/api/structured')
         setData(res.data);
         const firstSport = Object.keys(res.data)[0];
         setSelectedSport(firstSport);
