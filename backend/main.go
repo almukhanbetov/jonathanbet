@@ -68,13 +68,12 @@ func main() {
 
     r := gin.Default()
     r.Use(cors.New(cors.Config{
-        AllowOrigins:     []string{"http://localhost:5173", "http://127.0.0.1:5173"},
-        AllowMethods:     []string{"GET"},
-        AllowHeaders:     []string{"Content-Type"},
+        AllowOrigins:     []string{"*"},
+        AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+        AllowHeaders:     []string{"*"},
         AllowCredentials: true,
         MaxAge:           12 * time.Hour,
     }))
-
     r.GET("/structured", func(c *gin.Context) {
         data, err := ParseStructuredMatches()
         if err != nil {
