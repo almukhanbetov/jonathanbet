@@ -23,7 +23,6 @@ export default function App() {
 
     fetchData();
   }, []);
-
   const sports = Object.keys(data);
   const currentMatches =
     data[selectedSport]?.[selectedCategory] || [];

@@ -18,10 +18,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type RawItem struct {
-	Type string `json:"type"`
-}
-
+type RawItem struct{ Type string `json:"type"` }
 type EV struct {
 	Type string `json:"type"`
 	ID   string `json:"ID"`
@@ -32,7 +29,6 @@ type EV struct {
 	CT   string `json:"CT"`
 	CL   string `json:"CL"`
 }
-
 type PA struct {
 	Type string `json:"type"`
 	ID   string `json:"ID"`
@@ -40,7 +36,6 @@ type PA struct {
 	FI   string `json:"FI"`
 	OR   string `json:"OR"`
 }
-
 type MatchCard struct {
 	MatchID    string            `json:"id"`
 	MatchName  string            `json:"match"`
@@ -49,7 +44,6 @@ type MatchCard struct {
 	Tournament string            `json:"tournament"`
 	Odds       map[string]string `json:"odds"`
 }
-
 type SportMatches struct {
 	Popular  []MatchCard `json:"Popular"`
 	Live     []MatchCard `json:"Live"`
@@ -57,18 +51,19 @@ type SportMatches struct {
 }
 
 var ctx = context.Background()
-var rdb = redis.NewClient(&redis.Options{
-	Addr: "localhost:6379",
-})
+var rdb = redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 
 func main() {
 	godotenv.Load()
+
+	log.Println("🔐 BOOKIES_LOGIN =", os.Getenv("BOOKIES_LOGIN"))
+	log.Println("🔐 BOOKIES_TOKEN =", os.Getenv("BOOKIES_TOKEN"))
 
 	startBackgroundUpdater()
 
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://127.0.0.1:5173"},
+		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET"},
 		AllowHeaders:     []string{"Content-Type"},
 		AllowCredentials: true,
@@ -85,17 +80,11 @@ func main() {
 		c.JSON(http.StatusOK, data)
 	})
 
-	r.Run(":8081")
+	r.Run("0.0.0.0:8081")
 }
 
 func startBackgroundUpdater() {
 	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Println("🔥 ПАНИКА в фоновом обновлении:", r)
-			}
-		}()
-
 		for {
 			err := fetchAndCacheData()
 			if err != nil {
@@ -111,10 +100,14 @@ func fetchAndCacheData() error {
 	url := fmt.Sprintf("https://bookiesapi.com/api/get.php?login=%s&token=%s&task=bet365live",
 		os.Getenv("BOOKIES_LOGIN"), os.Getenv("BOOKIES_TOKEN"))
 
+	log.Println("🌐 Fetching from:", url)
 	resp, err := client.R().Get(url)
 	if err != nil {
 		return fmt.Errorf("ошибка запроса к bookiesapi: %w", err)
 	}
+
+	log.Println("📄 Ответ длина:", len(resp.Body()))
+	log.Println("📄 Первые 500 символов:", string(resp.Body())[:500])
 
 	if len(resp.Body()) < 50 {
 		return fmt.Errorf("пустой или короткий ответ от API")
@@ -130,14 +123,13 @@ func fetchAndCacheData() error {
 }
 
 func ParseStructuredMatches() (map[string]SportMatches, error) {
-	cacheKey := "bet365live_json"
-	cached, err := rdb.Get(ctx, cacheKey).Result()
-	if err == nil {
-		log.Println("✅ Используем кэш из Redis")
-		return parseFromJSON([]byte(cached))
+	cached, err := rdb.Get(ctx, "bet365live_json").Result()
+	if err == redis.Nil {
+		return nil, fmt.Errorf("данные отсутствуют в кэше Redis")
+	} else if err != nil {
+		return nil, err
 	}
-	log.Println("⚠️ Нет данных в Redis")
-	return nil, fmt.Errorf("данные отсутствуют в кэше Redis")
+	return parseFromJSON([]byte(cached))
 }
 
 func parseFromJSON(data []byte) (map[string]SportMatches, error) {
@@ -156,7 +148,6 @@ func parseFromJSON(data []byte) (map[string]SportMatches, error) {
 		for _, item := range block {
 			var t RawItem
 			json.Unmarshal(item, &t)
-
 			switch t.Type {
 			case "CL":
 				var cl struct {
@@ -166,12 +157,10 @@ func parseFromJSON(data []byte) (map[string]SportMatches, error) {
 				}
 				json.Unmarshal(item, &cl)
 				clMap[cl.ID] = cl.NA
-
 			case "EV":
 				var ev EV
 				json.Unmarshal(item, &ev)
 				matches = append(matches, ev)
-
 			case "PA":
 				var pa PA
 				json.Unmarshal(item, &pa)
@@ -181,7 +170,6 @@ func parseFromJSON(data []byte) (map[string]SportMatches, error) {
 	}
 
 	result := make(map[string]SportMatches)
-
 	for _, match := range matches {
 		if match.ID == "" || match.CL == "" {
 			continue
