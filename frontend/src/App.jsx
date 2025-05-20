@@ -1,76 +1,71 @@
-
-import { useEffect, useState } from "react";
-import axios from "axios";
-import MatchCard from "./MatchCard";
-import Sidebar from "./Sidebar";
+import React, { useEffect, useState, useCallback } from 'react';
+import axios from 'axios';
+import Header from './components/Header';
+import Leftbar from './components/Leftbar';
+import Rightbar from './components/Rightbar';
+import MatchRow from './components/MatchRow';
 
 export default function App() {
-  const [data, setData] = useState({});
-  const [selectedSport, setSelectedSport] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Live");
+  const [matches, setMatches] = useState([]);
+  const [sport, setSport] = useState('soccer');
+  const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState('live');
+  const [countdown, setCountdown] = useState(5);
+
+  const fetchMatches = useCallback(async () => {
+    setLoading(true);
+    try {
+      const endpoint = `/api/games?mode=${mode}&sport=${sport}`;
+      const res = await axios.get(endpoint);
+      const data = res.data ?? [];
+      if (Array.isArray(data)) {
+        setMatches(data);
+      } else {
+        console.warn('⚠️ API вернул не массив:', data);
+        setMatches([]);
+      }
+    } catch (err) {
+      console.error('Ошибка загрузки матчей:', err);
+    } finally {
+      setLoading(false);
+      setCountdown(5);
+    }
+  }, [mode, sport]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // const res = await axios.get("http://localhost:8081/structured");
-        const res = await axios.get('/api/structured')
-        setData(res.data);
-        const firstSport = Object.keys(res.data)[0];
-        setSelectedSport(firstSport);
-      } catch (err) {
-        console.error("Ошибка при получении данных:", err);
-      }
+    fetchMatches();
+
+    let refreshInterval;
+    let countdownInterval;
+
+    if (mode === 'live') {
+      refreshInterval = setInterval(fetchMatches, 5000);
+      countdownInterval = setInterval(() => {
+        setCountdown((prev) => (prev > 0 ? prev - 1 : 5));
+      }, 1000);
+    }
+
+    return () => {
+      clearInterval(refreshInterval);
+      clearInterval(countdownInterval);
     };
-
-    fetchData();
-  }, []);
-
-  const sports = Object.keys(data);
-  const currentMatches =
-    data[selectedSport]?.[selectedCategory] || [];
+  }, [fetchMatches, mode]);
 
   return (
-    <div className="flex">
-      <Sidebar
-        sports={sports}
-        selected={selectedSport}
-        onSelect={setSelectedSport}
-      />
-
-      <main className="flex-1 p-4 bg-zinc-950 min-h-screen text-white">
-        {selectedSport && (
-          <>
-            <div className="flex space-x-4 mb-6">
-              {["Live", "Uncoming", "Popular"].map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-xl border ${
-                    selectedCategory === cat
-                      ? "bg-green-500 text-white"
-                      : "bg-zinc-800 text-gray-300"
-                  }`}
-                >
-                  {cat === "Uncoming" ? "Предстоящие" : cat}
-                </button>
-              ))}
-            </div>
-
-            {currentMatches.length === 0 ? (
-              <p className="text-sm text-gray-500">Нет матчей</p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {currentMatches.map((match, index) => (
-                  <MatchCard
-                    key={match.id || `${match.match || "?"}-${index}`}
-                    match={match}
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </main>
+    <div className="min-h-screen bg-zinc-900 text-white flex flex-col">
+      <Header mode={mode} setMode={setMode} onRefresh={fetchMatches} loading={loading} countdown={countdown} />
+      <div className="flex flex-1 flex-col md:flex-row">
+        <Leftbar selected={sport} onSelect={setSport} />
+        <main className="flex-1 p-4 overflow-y-auto space-y-2">
+          {loading && (
+            <div className="text-center text-sm text-zinc-400 animate-pulse">Обновляется...</div>
+          )}
+          {matches.map((match) => (
+            <MatchRow key={match.game_id} match={match} />
+          ))}
+        </main>
+        <Rightbar />
+      </div>
     </div>
   );
 }
