@@ -4,7 +4,7 @@ export default function Header({ mode, setMode, onRefresh, loading, countdown })
   return (
     <header className="bg-zinc-800 px-6 py-4 shadow flex items-center justify-between">
       <div className="flex items-center gap-4">
-        <h1 className="text-xl font-bold">Stake Clone</h1>
+        <h1 className="text-xl font-bold">JonathanBet</h1>
         <button
           onClick={() => setMode('live')}
           className={`px-4 py-2 rounded ${
