@@ -7,7 +7,7 @@ services:
     env_file:
       - .env
     ports:
-      - "8282:8081"
+      - "8282:8282"
     restart: always
 
   frontend:

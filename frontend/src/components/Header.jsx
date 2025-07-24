@@ -30,7 +30,7 @@ export default function Header({ mode, setMode, onRefresh, loading, countdown })
       </div>
       <div className="flex gap-4">
         <button className="bg-zinc-700 px-4 py-2 rounded">Войти</button>
-        <button className="bg-green-600 px-4 py-2 rounded">Корзина</button>
+        <button className="bg-green-600 px-4 py-2 rounded">Регистрация</button>
       </div>
     </header>
   );

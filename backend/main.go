@@ -125,6 +125,6 @@ func main() {
 		c.JSON(http.StatusOK, games)
 	})
 
-	log.Println("🚀 Сервер запущен на http://localhost:8081")
-	router.Run(":8081")
+	log.Println("🚀 Сервер запущен на http://localhost:8282")
+	router.Run(":8282")
 }
